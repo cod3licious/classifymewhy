@@ -1,0 +1,17 @@
+Flask
+Flask-Cors
+Flask-Script
+Flask-SSLify
+gunicorn
+itsdangerous
+Jinja2
+MarkupSafe
+requests
+six
+urllib3
+Werkzeug
+numpy
+scipy
+scikit-learn
+matplotlib
+nlputils
