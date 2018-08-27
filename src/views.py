@@ -49,7 +49,7 @@ def index():
         text = request.form.get('text', '')
         label = request.form.get('label', '')
         if not text:
-            return make_response(jsonify({"return": False, "error": ["no text provided"]}), 400)
+            return render_template('index.html', example_text=example_text, pred_class="-", pred_score=0., text_div="ERROR: You have to enter some text below...")
         # classify text
         pred_class, pred_score, htmlstr = classify_me_why(text, label)
         return render_template('index.html', example_text=example_text, pred_class=pred_class, pred_score=pred_score, text_div=htmlstr)
