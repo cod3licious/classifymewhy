@@ -14,4 +14,4 @@ numpy
 scipy
 scikit-learn
 matplotlib
-nlputils
+nlputils>=1.0.7
