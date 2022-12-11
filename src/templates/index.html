@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width,maximum-scale=2">
     <meta name="description" content="classify me! why? : explaining machine learning text classification decisions">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static', path='css/style.css') }}">
 
     <title>classify me! why?</title>
   </head>
@@ -26,23 +26,23 @@
       <h4>what is this?</h4>
       <div>Machine learning algorithms operate all around us, whether they recognize your face in a picture or show you ads for something that you might actually be tempted to buy. They control many aspects of our daily lives and make important decisions for us. Decisions we often may not understand. To uncover the inner workings of these algorithms, researchers at the Fraunhofer HHI and the Technische Universität Berlin developed a technique called <em>Layer-wise Relevance Propagation</em> (LRP), which can help to make classifier decisions more transparent.</div>
       <div>This WebApp is designed to show you how LRP for text classification can work in practice - just play around with it below!</div>
-      <div>You can find more information about this particular example in <a href="https://arxiv.org/abs/1707.05261">this paper</a> and further theoretical background on LRP in <a href="http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0181142">this paper</a> or <a href="http://heatmapping.org/">here</a>.</div>
-      <div>For other projects from me visit <a href="https://cod3licious.github.io/"> my personal website</a>.</div>
+      <div>You can find more information about this particular example in <a href="https://arxiv.org/abs/1707.05261" target="_blank" rel="nofollow">this paper</a> and further theoretical background on LRP in <a href="http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0181142" target="_blank" rel="nofollow">this paper</a> or <a href="http://heatmapping.org/" target="_blank" rel="nofollow">here</a>.</div>
+      <div>For other projects from me visit <a href="https://franziskahorn.de/" target="_blank" rel="nofollow"> my personal website</a>.</div>
       <br>
 
       <h4>try it for yourself:</h4>
       Just input a paragraph from a scientific paper about cancer and see what our algorithm thinks is the type of cancer the paper is written about or from which section of the paper this paragraph was taken. And see why, i.e., which words tipped the classifier off.
       {% if pred_class %}
       <div>
-        <h6>Result:</h6>
+        <h5>Result:</h5>
         <div><u>Class:</u>&nbsp; <strong> {{ pred_class }} </strong> &ensp;(certainty: {{ pred_score|round(1) }}%)</div>
         <div>{{ text_div|safe }}</div>
       </div>
       {% endif %}
       <form action="/" method="post">
-        <h6>Input text:</h6> 
+        <h6>Input text:</h6>
         <div><textarea type="text" name="text" rows="15" cols="90">{{ example_text|safe }}</textarea></div>
-        <h6>Classify:</h6> 
+        <h6>Classify:</h6>
         <div>
           <select name="label">
             <option value="keyword">Cancer type</option>
