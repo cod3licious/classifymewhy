@@ -2,10 +2,10 @@
 
 1.) open a terminal in the `classifymewhy` folder
 
-2.)install all required packages and activate Python virtual env (assumes an existing python 3 and pipenv installation):
+2.) install all required packages and activate Python virtual env (assumes an existing python 3 and poetry installation):
 ```
-$ pipenv install
-$ pipenv shell
+$ poetry install --no-root
+$ poetry shell
 ```
 
 3.) train & save machine learning model:

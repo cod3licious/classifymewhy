@@ -7,4 +7,5 @@
 *.sqlite
 *.db
 .env
-fly.toml
+*.sublime-project
+*.sublime-workspace

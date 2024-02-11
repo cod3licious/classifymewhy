@@ -1,13 +1,13 @@
-import re
 import pickle
-import numpy as np
-import matplotlib
-from matplotlib.cm import get_cmap
-from scipy.sparse import csr_matrix, lil_matrix
-from sklearn.linear_model import LogisticRegression as logreg
+import re
+
 import joblib
-from nlputils.features import preprocess_text
-from nlputils.features import FeatureTransform, features2mat
+import matplotlib as mpl
+import numpy as np
+from matplotlib.cm import get_cmap
+from nlputils.features import FeatureTransform, features2mat, preprocess_text
+from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.linear_model import LogisticRegression
 
 
 def scores2html(text, scores, highlight_oov=False):
@@ -18,13 +18,14 @@ def scores2html(text, scores, highlight_oov=False):
         - text: the raw text in which the words should be highlighted
         - scores: a dictionary with {word: score} or a list with tuples [(word, score)]
         - highlight_oov: if True, out-of-vocabulary words will be highlighted in yellow (default False)
+
     Returns:
         - string with the html text
     """
     # colormaps
     cmap_pos = get_cmap("Greens")
     cmap_neg = get_cmap("Reds")
-    norm = matplotlib.colors.Normalize(0.0, 1.0)
+    norm = mpl.colors.Normalize(0.0, 1.0)
 
     # normalize score by absolute max value
     if isinstance(scores, dict):
@@ -51,15 +52,9 @@ def scores2html(text, scores, highlight_oov=False):
         resttext = resttext[resttext.find(word) + len(word) :]
         # get the colorcode of the word
         rgbac = (1.0, 1.0, 0.0)  # for unknown words
-        if highlight_oov:
-            alpha = 0.3
-        else:
-            alpha = 0.0
+        alpha = 0.3 if highlight_oov else 0.0
         if score is not None:
-            if score < 0:
-                rgbac = cmap_neg(norm(-score))
-            else:
-                rgbac = cmap_pos(norm(score))
+            rgbac = cmap_neg(norm(-score)) if score < 0 else cmap_pos(norm(score))
             alpha = 0.5
         htmlstr += f'<span style="background-color: rgba({round(255 * rgbac[0])}, {round(255 * rgbac[1])}, {round(255 * rgbac[2])}, {alpha:.1f})">{word}</span>'
     # after the last word, add the rest of the text
@@ -109,18 +104,14 @@ def classify_me_why(text, label="keyword"):
             scores *= -1.0
         scores_dict = dict(list(zip(featurenames, scores)))
     else:
-        scores_dict = dict(
-            list(zip(featurenames, scores[:, clf.classes_ == pred_class][:, 0]))
-        )
+        scores_dict = dict(list(zip(featurenames, scores[:, clf.classes_ == pred_class][:, 0])))
     # generate html
     htmlstr = scores2html(text, scores_dict)
     return pred_class.replace("_", " ").title(), pred_score, htmlstr
 
 
 def train_clf(label="keyword"):
-    """
-    train a classifier on the cancer papers dataset with the given target label (keyword or partype)
-    """
+    """Train a classifier on the cancer papers dataset with the given target label (keyword or partype)"""
     from my_datasets.cancer_papers.load_cancer import articles2dict
 
     print("loading articles")
@@ -132,14 +123,12 @@ def train_clf(label="keyword"):
     )
     print("transforming articles into features")
     trainids = list(textdict.keys())
-    ft = FeatureTransform(
-        norm="max", weight=True, renorm="max", identify_bigrams=False, norm_num=False
-    )
+    ft = FeatureTransform(norm="max", weight=True, renorm="max", identify_bigrams=False, norm_num=False)
     docfeats = ft.texts2features(textdict, fit_ids=trainids)
     featmat_train, featurenames = features2mat(docfeats, trainids)
     y_train = [doccats[tid] for tid in trainids]
     print("training classifier")
-    clf = logreg(class_weight="balanced", random_state=1)
+    clf = LogisticRegression(class_weight="balanced", random_state=1)
     clf.fit(featmat_train, y_train)
     # save all we need for later applying the clf to new docs
     with open(f"src/assets/{label}_ft.pkl", "wb") as f:
