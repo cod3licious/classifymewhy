@@ -35,19 +35,17 @@ def scores2html(text, scores, highlight_oov=False):
         scores = []
         for word in re.findall(r"[\w-]+", text, re.UNICODE):
             word_pp = preprocess_text(word, norm_num=False)
-            if word_pp in scores_dict:
-                scores.append((word, scores_dict[word_pp]))
-            else:
-                scores.append((word, None))
+            scores.append((word, scores_dict.get(word_pp)))
     else:
         N = np.max(np.abs([t[1] for t in scores if t[1] is not None]))
         scores = [(w, s / N) if s is not None else (w, None) for w, s in scores]
 
-    htmlstr = '<div style="white-space: pre-wrap; font-family: monospace;">'
+    # TODO: would probably be more efficient if resttext wasn't constantly overwritten
+    htmlstr = ['<div style="white-space: pre-wrap; font-family: monospace;">']
     resttext = text
     for word, score in scores:
         # was anything before the identified word? add it unchanged to the html
-        htmlstr += resttext[: resttext.find(word)]
+        htmlstr.append(resttext[: resttext.find(word)])
         # cut off the identified word
         resttext = resttext[resttext.find(word) + len(word) :]
         # get the colorcode of the word
@@ -56,11 +54,11 @@ def scores2html(text, scores, highlight_oov=False):
         if score is not None:
             rgbac = cmap_neg(norm(-score)) if score < 0 else cmap_pos(norm(score))
             alpha = 0.5
-        htmlstr += f'<span style="background-color: rgba({round(255 * rgbac[0])}, {round(255 * rgbac[1])}, {round(255 * rgbac[2])}, {alpha:.1f})">{word}</span>'
+        htmlstr.append(f'<span style="background-color: rgba({round(255 * rgbac[0])}, {round(255 * rgbac[1])}, {round(255 * rgbac[2])}, {alpha:.1f})">{word}</span>')
     # after the last word, add the rest of the text
-    htmlstr += resttext
-    htmlstr += "</div>"
-    return htmlstr
+    htmlstr.append(resttext)
+    htmlstr.append("</div>")
+    return "".join(htmlstr)
 
 
 def classify_me_why(text, label="keyword"):

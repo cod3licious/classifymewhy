@@ -25,19 +25,11 @@ def post_index(request: Request, text: str = Form(), label: str = Form()):
     # load a random example text
     with open(f"src/assets/example_text_{random.randint(1, 9)}.txt") as f:
         example_text = f.read().strip()
+    # classify text if given
     if not text:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "example_text": example_text,
-                "pred_class": "-",
-                "pred_score": 0.0,
-                "text_div": "ERROR: You have to enter some text below...",
-            },
-        )
-    # classify text
-    pred_class, pred_score, htmlstr = classify_me_why(text, label)
+        pred_class, pred_score, htmlstr = "-", 0.0, "ERROR: You have to enter some text below..."
+    else:
+        pred_class, pred_score, htmlstr = classify_me_why(text, label)
     return templates.TemplateResponse(
         "index.html",
         {
