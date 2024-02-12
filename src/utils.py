@@ -54,7 +54,9 @@ def scores2html(text, scores, highlight_oov=False):
         if score is not None:
             rgbac = cmap_neg(norm(-score)) if score < 0 else cmap_pos(norm(score))
             alpha = 0.5
-        htmlstr.append(f'<span style="background-color: rgba({round(255 * rgbac[0])}, {round(255 * rgbac[1])}, {round(255 * rgbac[2])}, {alpha:.1f})">{word}</span>')
+        htmlstr.append(
+            f'<span style="background-color: rgba({round(255 * rgbac[0])}, {round(255 * rgbac[1])}, {round(255 * rgbac[2])}, {alpha:.1f})">{word}</span>'
+        )
     # after the last word, add the rest of the text
     htmlstr.append(resttext)
     htmlstr.append("</div>")
@@ -100,9 +102,9 @@ def classify_me_why(text, label="keyword"):
             # we want the scores which speak for the class - for the negative class,
             # the sign needs to be reversed
             scores *= -1.0
-        scores_dict = dict(list(zip(featurenames, scores)))
+        scores_dict = dict(list(zip(featurenames, scores, strict=True)))
     else:
-        scores_dict = dict(list(zip(featurenames, scores[:, clf.classes_ == pred_class][:, 0])))
+        scores_dict = dict(list(zip(featurenames, scores[:, clf.classes_ == pred_class][:, 0], strict=True)))
     # generate html
     htmlstr = scores2html(text, scores_dict)
     return pred_class.replace("_", " ").title(), pred_score, htmlstr
