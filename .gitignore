@@ -11,4 +11,3 @@
 *.sublime-workspace
 Dockerfile
 .dockerignore
-poetry.lock

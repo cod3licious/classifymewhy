@@ -1,22 +1,22 @@
-import pickle
 import re
 
 import joblib
 import matplotlib as mpl
 import numpy as np
 from matplotlib.cm import get_cmap
-from nlputils.features import FeatureTransform, features2mat, preprocess_text
 from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
-def scores2html(text, scores, highlight_oov=False):
+def scores2html(text, scores, preprocess_text=lambda x: x, highlight_oov=False):
     """
     Based on the original text and relevance scores, generate a html doc highlighting positive / negative words
 
     Inputs:
         - text: the raw text in which the words should be highlighted
         - scores: a dictionary with {word: score} or a list with tuples [(word, score)]
+        - preprocess_text: function to preprocess the text to match them to the tfidf features (needed if scores is a dict)
         - highlight_oov: if True, out-of-vocabulary words will be highlighted in yellow (default False)
 
     Returns:
@@ -32,10 +32,7 @@ def scores2html(text, scores, highlight_oov=False):
         N = np.max(np.abs(list(scores.values())))
         scores_dict = {word: scores[word] / N for word in scores}
         # transform dict into word list with scores
-        scores = []
-        for word in re.findall(r"[\w-]+", text, re.UNICODE):
-            word_pp = preprocess_text(word, norm_num=False)
-            scores.append((word, scores_dict.get(word_pp)))
+        scores = [(word, scores_dict.get(preprocess_text(word))) for word in re.findall(r"(?u)\b\w\w+\b", text, re.UNICODE)]
     else:
         N = np.max(np.abs([t[1] for t in scores if t[1] is not None]))
         scores = [(w, s / N) if s is not None else (w, None) for w, s in scores]
@@ -76,37 +73,34 @@ def classify_me_why(text, label="keyword"):
         - htmlstr: html ready doc with words highlighted corresponding to the classifier decision
     """
     # load all the stuff we need for the classification
-    with open(f"src/assets/{label}_ft.pkl", "rb") as f:
-        ft = pickle.load(f)
-    with open(f"src/assets/{label}_featurenames.pkl", "rb") as f:
-        featurenames = pickle.load(f)
+    vectorizer = joblib.load(f"src/assets/{label}_vectorizer.pkl")
     clf = joblib.load(f"src/assets/{label}_clf.pkl")
     # transform new text into features
-    textdict = {1: text}
-    docfeats = ft.texts2features(textdict)
-    featmat_test, _ = features2mat(docfeats, [1], featurenames)
+    featmat_test = vectorizer.transform([text])
     # get class and score
     pred_class = clf.predict(featmat_test)[0]
     pred_score = 100 * clf.predict_proba(featmat_test)[0, clf.classes_ == pred_class][0]
     # transform the feature vector into a diagonal matrix
-    feat_vec = lil_matrix((len(featurenames), len(featurenames)), dtype=float)
+    feat_vec = lil_matrix((featmat_test.shape[1], featmat_test.shape[1]), dtype=float)
     feat_vec.setdiag(featmat_test[0, :].toarray().flatten())
     feat_vec = csr_matrix(feat_vec)
     # get the scores (i.e. before summing up)
     scores = clf.decision_function(feat_vec)
     # adapt for the intercept
-    scores -= (1.0 - 1.0 / len(featurenames)) * clf.intercept_
+    scores -= (1.0 - 1.0 / featmat_test.shape[1]) * clf.intercept_
     # binary or multi class?
     if len(scores.shape) == 1:
         if clf.classes_[0] == pred_class:
             # we want the scores which speak for the class - for the negative class,
             # the sign needs to be reversed
             scores *= -1.0
-        scores_dict = dict(list(zip(featurenames, scores, strict=True)))
+        scores_dict = dict(list(zip(vectorizer.get_feature_names_out(), scores, strict=True)))
     else:
-        scores_dict = dict(list(zip(featurenames, scores[:, clf.classes_ == pred_class][:, 0], strict=True)))
+        scores_dict = dict(
+            list(zip(vectorizer.get_feature_names_out(), scores[:, clf.classes_ == pred_class][:, 0], strict=True))
+        )
     # generate html
-    htmlstr = scores2html(text, scores_dict)
+    htmlstr = scores2html(text, scores_dict, vectorizer.build_preprocessor())
     return pred_class.replace("_", " ").title(), pred_score, htmlstr
 
 
@@ -122,19 +116,15 @@ def train_clf(label="keyword"):
         ignore_types=["Mixed"],
     )
     print("transforming articles into features")
+    vectorizer = TfidfVectorizer(strip_accents="unicode")
     trainids = list(textdict.keys())
-    ft = FeatureTransform(norm="max", weight=True, renorm="max", identify_bigrams=False, norm_num=False)
-    docfeats = ft.texts2features(textdict, fit_ids=trainids)
-    featmat_train, featurenames = features2mat(docfeats, trainids)
+    featmat_train = vectorizer.fit_transform([textdict[tid] for tid in trainids])
     y_train = [doccats[tid] for tid in trainids]
     print("training classifier")
     clf = LogisticRegression(class_weight="balanced", random_state=1)
     clf.fit(featmat_train, y_train)
     # save all we need for later applying the clf to new docs
-    with open(f"src/assets/{label}_ft.pkl", "wb") as f:
-        pickle.dump(ft, f, -1)
-    with open(f"src/assets/{label}_featurenames.pkl", "wb") as f:
-        pickle.dump(featurenames, f, -1)
+    joblib.dump(vectorizer, f"src/assets/{label}_vectorizer.pkl")
     joblib.dump(clf, f"src/assets/{label}_clf.pkl")
 
 
