@@ -2,23 +2,22 @@
 
 1.) open a terminal in the `classifymewhy` folder
 
-2.) install all required packages and activate Python virtual env (assumes an existing python 3 and poetry installation):
+2.) install all required packages (assumes an existing uv installation):
 ```
-$ poetry install --no-root
-$ poetry shell
+$ uv sync
 ```
 
 3.) train & save machine learning model:
 ```
-$ python src/utils.py
+$ uv run python src/utils.py
 ```
 
-4.) run local server at `http://127.0.0.1:8000`:
+4.) run local server at `http://127.0.0.1:8000` and to test the app in the browser:
 ```
-$ uvicorn src.main:app --reload
+$ uv run uvicorn src.main:app --reload
 ```
 
 5.) send a post request with some data to `http://127.0.0.1:8000/classify`, for example using the `test_classify.py` script in the `classifymewhy/tests` folder:
 ```
-$ python tests/test_classify.py
+$ uv run python tests/test_classify.py
 ```

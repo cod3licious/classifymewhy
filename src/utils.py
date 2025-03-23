@@ -62,7 +62,7 @@ def scores2html(text, scores, preprocess_text=lambda x: x, highlight_oov=False):
 
 def classify_me_why(text, label="keyword"):
     """
-    classify the given text with respect to the target label (keyword or partype)
+    Classify the given text with respect to the target label (keyword or partype)
 
     Inputs:
         - text: a string with the given text that should be classified
